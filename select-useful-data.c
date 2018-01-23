@@ -26,7 +26,7 @@
 
 //所以我们一行行读出来，然后使用逗号分隔开
 //将块大小设定为4K
-#define PAGE_SIZE 4096
+#define PAGE_SIZE 1024
 
 //每一行的最大字节数，同时也是行缓冲区的大小
 #define MAX_LINE_SIZE 1024
@@ -43,12 +43,12 @@ int main(void){
     
     printf("开始运行\n");
 
-    if((fp_read = fopen("resource/MSR-Cambridge/mds_0.csv","r")) != NULL)
+    if((fp_read = fopen("resource/MSR-Cambridge/hm_0.csv","r")) != NULL)
     {   
         printf("开始读取\n");
 
         //这里开始写文件
-        if((fp_write = fopen("block_count.csv", "w+")) == NULL){
+        if((fp_write = fopen("block_count_hm.csv", "w+")) == NULL){
             printf("文件写开启失败\n");
             fclose(fp_read);
             fp_read = NULL;

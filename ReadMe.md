@@ -77,6 +77,52 @@
 
 #### 3.1.2、Page顺序预读策略模型的实现
 
+根据预测到那就三位，没有预测到那就六位的思路，我们非常轻易就可以给出实现。
+
+```c
+void page_predictor(long now_access, long *predictor_arr, int *size){
+    if(predictor_arr == NULL){
+        printf("predictor_arr必须在外部分配好空间、\n");
+        return;
+    }
+    
+    printf("开始进行预测，now_access = %ld\n", now_access);
+    //开始预测，看看之前的预测是不是对的
+    //查看之前的预测结果
+
+    int i;
+
+    //要返回的块编号的数量
+    int return_num = 3;
+
+    for(i = 0; i < MAX_HISTORY_ARR_SIZE; i++){
+        //开始检查上一次预测的记录
+        if(history_arr[i] == now_access){
+            //这里说明这个块是上次预测到的
+            return_num = 6;
+            break;
+        }
+    }
+
+    //初始化历史函数，等待下一次使用
+    memset(&history_arr,0,MAX_HISTORY_ARR_SIZE*sizeof(long));
+
+    //如果没有预测到，那就依旧返回三个，如果预测到了那就返回6个
+    for(i = 0; i < return_num; i++){
+        predictor_arr[i] = now_access + i + 1;
+        //重新定义历史预测函数
+        history_arr[i] = now_access + i + 1;
+    }
+    
+    *size = return_num; 
+    
+}
+```
+
+我们在`MSR-Cambridge`中进行了测试，结果发现这个数据集是一个非常随机的数据集，无论是在1K还是4K下都几乎没有成功预读过。于是我们对其他的数据集做了预测。发现在`MSR-Cambridge`数据集中基本上都是随机读，这也说明了我们所做工作的必要性，实际上为微软服务器的场景中，实际上应该还是以随机访问为主的。
+
+
+
 
 
 ### 3.2、基于Noah的深度预测模型
