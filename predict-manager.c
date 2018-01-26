@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "pageread-predictor.h"
+#include "readcache-with-LRU.h"
 
 //每一行的最大字节数，同时也是行缓冲区的大小
 #define MAX_LINE_SIZE 1024
@@ -22,6 +23,15 @@ void predictor_manager(){
     int size;
     int i;
 
+    //这里加入一个读缓存
+    read_cache_t read_cache;
+    //初始化读缓存
+    init_readcache_meta(&read_cache);
+
+    //初始化一个函数来看看缓存命中率
+    long all_count_of_block = 0;
+    long hit_count_of_block = 0;
+
     //初始化一个预测序列
     predict_seq = (long*)malloc(MAX_PREDICT_DEEP*sizeof(long));
 
@@ -31,8 +41,17 @@ void predictor_manager(){
         printf("开始读取访问的历史记录\n");
         
         while(fgets(line, MAX_LINE_SIZE, fp_read)){
+            //记录读进来的块
+            all_count_of_block++;
+
             //将一行的内容转化为块号传入
             access_block_count = atol(line);
+
+            //看看这个块是不是命中的
+            if(search_read_cache(&read_cache, access_block_count) != NULL){
+                hit_count_of_block++;
+            }
+
             //这里创建一个数组来存储
             page_init();
 
@@ -40,16 +59,19 @@ void predictor_manager(){
             memset(predict_seq, 0, MAX_PREDICT_DEEP*sizeof(long));
             
             page_predictor(access_block_count, predict_seq, &size);
+            
+            //我们将新的东西放到读缓存
+            for(i = 0;  i < size; i++){
+                add_cache_meta(&read_cache, predict_seq[i]);
+            }
 
             //打印一下预测到的东西
-            // if(size == 6){
-                printf("预测:");
-                for(i = 0;  i < size; i++){
-                    printf(" %ld", predict_seq[i]);
-                }
-
-                printf("\n");
+            // printf("预测:");
+            // for(i = 0;  i < size; i++){
+            //     printf(" %ld", predict_seq[i]);
             // }
+
+            // printf("\n");
             
         }
         
@@ -62,6 +84,11 @@ void predictor_manager(){
     printf("读取完毕\n");
     fclose(fp_read);
     fp_read = NULL;
+
+    //计算缓存命中率
+    int hit_rate = hit_count_of_block  * 100 / all_count_of_block;
+
+    printf("缓冲命中率:%d%%\n", hit_rate);
 }
 
 int main(){

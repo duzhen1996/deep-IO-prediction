@@ -12,7 +12,7 @@
 
 [SNIA IOTTA Repository BLOCK I/O TRACES](http://iotta.snia.org/tracetypes/3)
 
-我们使用的是一个来自于微软的trace集，也就是`MSR-Cambridge`，我们使用里面的`mds_0`。得到的是一个csv文件，根据Readme的内容，这个csv文件一共分7列，每一列包含下面几个内容：
+我们使用的是一个来自于Cambridge的trace集，也就是`MSR-Cambridge`，我们使用里面的`mds_0`。得到的是一个csv文件，根据Readme的内容，这个csv文件一共分7列，每一列包含下面几个内容：
 
 > The files are gzipped csv (comma-separated text) files. The fields in
 > the csv are:
@@ -119,7 +119,7 @@ void page_predictor(long now_access, long *predictor_arr, int *size){
 }
 ```
 
-我们在`MSR-Cambridge`中进行了测试，结果发现这个数据集是一个非常随机的数据集，无论是在1K还是4K下都几乎没有成功预读过。于是我们对其他的数据集做了预测。发现在`MSR-Cambridge`数据集中基本上都是随机读，这也说明了我们所做工作的必要性，实际上为微软服务器的场景中，实际上应该还是以随机访问为主的。
+我们在`MSR-Cambridge`中进行了测试，结果发现这个数据集是一个非常随机的数据集，无论是在1K还是4K下都几乎没有成功预读过。于是我们对其他的数据集做了预测。发现在`MSR-Cambridge`数据集中基本上都是随机读，这也说明了我们所做工作的必要性，在这个数据集所在的场景中，实际上应该还是以随机访问为主的。
 
 
 

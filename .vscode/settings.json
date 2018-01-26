@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "memory.h": "c",
-        "pageread-predictor.h": "c"
+        "pageread-predictor.h": "c",
+        "readcache-with-lru.h": "c"
     }
 }
