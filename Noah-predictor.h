@@ -57,4 +57,8 @@ long noah_find_last_succcess(last_success_records_t* success_record, long target
 
 void noah_add_time_of_counter(counter_record_t* counter_record, long target_block);
 
+void noah_add_new_item_predictor_meta(Noah_predictor_t* input_predictor, long target_block, long last_success);
+
+void noah_del_item_predictor_meta(Noah_predictor_t* input_predictor, long target_block);
+
 #endif
