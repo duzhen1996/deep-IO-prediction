@@ -149,6 +149,41 @@ void add_new_item_predictor_meta(Noah_predictor_t* input_predictor, long target_
     //这里向记录中添加新元素
     //首先先添加last_success_record
     last_success_item_t* add_item_last_record = (last_success_item_t *)malloc(sizeof(last_success_item_t));
+    last_success_item_t* last_success_head_next = input_predictor->success_record.head->next;
     //初始化
-    memset();
+    memset(add_item_last_record, 0, sizeof(last_success_item_t));
+    add_item_last_record->block_num = target_block;
+    add_item_last_record->success_num = last_success;
+
+    //插入到链表头部
+    input_predictor->success_record.head->next = add_item_last_record;
+    add_item_last_record->front = input_predictor->success_record.head;
+
+    //容量增加
+    input_predictor->success_record.size++;
+
+    //容量超标则剔除末尾元素
+    if(input_predictor->success_record.size > MAX_NOAH_RECORD_NUM){
+        last_success_item_t* last_success_head_front = input_predictor->success_record.head->front;
+        
+        //缝合一下
+        input_predictor->success_record.head->front = last_success_head_front->front;
+        last_success_head_front->next = input_predictor->success_record.head;
+        
+        free(last_success_head_front);
+
+        input_predictor->success_record.size--;
+    }
+
+    //然后在counter_record中添加元素
+    counter_item_t* add_item_counter_record = (counter_item_t *)malloc(sizeof(counter_item_t));
+    counter_item_t* counter_head_next = input_predictor->counter_record.head->next;
+    //初始化
+    memset(add_item_counter_record, 0, sizeof(counter_item_t));
+    //插入这个表肯定已经有一次后继访问了
+    add_item_counter_record->block_num = target_block;
+    add_item_counter_record->same_success_count = 1;
+
+    
+    
 }
