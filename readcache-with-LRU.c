@@ -23,17 +23,25 @@ void init_readcache_meta(read_cache_t* input_cache){
     input_cache->head->next = input_cache->head;
     input_cache->head->front = input_cache->head;
     input_cache->head->block_num = -1;
+
+    //初始化换出块数量和未经使用的换出块数量
+    input_cache->page_cache_del = 0;
+    input_cache->page_cache_have_not_access = 0;
 }
 
 
 //向缓存中添加一个元素的元数据
-void add_cache_meta(read_cache_t* input_cache, int cache_block_num){
+void add_cache_meta(read_cache_t* input_cache, long cache_block_num){
+    //看看是不是元素已经在缓冲区了
+    int this_have_accessed = 0;
+    
     //首先找一下看看有没有这个元素
     read_cache_meta_t* search_block = search_read_cache(input_cache, cache_block_num);
 
     if(search_block != NULL){
         //如果找到了这个block，那就直接删掉
         del_read_cache(input_cache, search_block);
+        this_have_accessed = 1;
     }
 
     //创建一个节点
@@ -44,10 +52,12 @@ void add_cache_meta(read_cache_t* input_cache, int cache_block_num){
     insert_block->front = NULL;
     insert_block->next = NULL;
 
+    insert_block->have_accessed = this_have_accessed;
+
 
     //查看大小，如果大小已经满了，那就从末尾删除元素
     if(input_cache->size >= MAX_READ_CACHE){
-        del_read_cache(input_cache, input_cache->head->front);
+        del_read_cache_total(input_cache, input_cache->head->front);
     }
 
     //到这里至少保证已经没有这个元素了，将元素添加到读缓存中
@@ -73,7 +83,7 @@ void add_item_head(read_cache_t* input_cache, read_cache_meta_t* insert_meta){
 }
 
 //在读缓存链表中搜索一个元素，返回这个元素的指针
-read_cache_meta_t* search_read_cache(read_cache_t* input_cache, int cache_block_num){
+read_cache_meta_t* search_read_cache(read_cache_t* input_cache, long cache_block_num){
     //用一个指针来不断搜索
     read_cache_meta_t* search_pointer = input_cache->head->next;
 
@@ -94,6 +104,29 @@ read_cache_meta_t* search_read_cache(read_cache_t* input_cache, int cache_block_
 
 //从读缓存链表中删除一个元素，将要删除的元素的指针传入
 void del_read_cache(read_cache_t* input_cache, read_cache_meta_t* del_meta){
+    
+    //这里重新连接前面和后面的节点
+    read_cache_meta_t* del_front = del_meta->front;
+    read_cache_meta_t* del_next = del_meta->next;
+
+    //前后重新连接一下
+    del_front->next = del_next;
+    del_next->front = del_front;
+
+    input_cache->size--;
+
+    //释放当前节点
+    free(del_meta);
+}
+
+//这个函数是在缓冲区满了之后为了腾空间释放缓冲区用的，所以这里我们需要记录一下预测的错误率
+void del_read_cache_total(read_cache_t* input_cache, read_cache_meta_t* del_meta){
+    input_cache->page_cache_del++;
+    
+    if(del_meta->have_accessed == 0){
+        input_cache->page_cache_have_not_access++;
+    }
+
     //这里重新连接前面和后面的节点
     read_cache_meta_t* del_front = del_meta->front;
     read_cache_meta_t* del_next = del_meta->next;

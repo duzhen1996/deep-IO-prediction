@@ -26,7 +26,7 @@
 
 //所以我们一行行读出来，然后使用逗号分隔开
 //将块大小设定为4K
-#define PAGE_SIZE 1024
+#define PAGE_SIZE 4096
 
 //每一行的最大字节数，同时也是行缓冲区的大小
 #define MAX_LINE_SIZE 1024
@@ -35,11 +35,17 @@
 #include <stdlib.h>
 #include <string.h>
 
+//关于这个函数我之前的处理有问题，实际上我顾头不顾尾，实际上我们不仅仅要考虑起始位置
+//还需要考虑结束的位置，所以offset也要考虑
 
 int main(void){
     FILE *fp_read = NULL;
     FILE *fp_write = NULL;
     char line[MAX_LINE_SIZE];
+    
+    //循环变量
+    long j;
+    int i;
     
     printf("开始运行\n");
 
@@ -71,18 +77,46 @@ int main(void){
             // printf("%s", result);
 
             //这里要进行计数，只保留第5列
-            int i = 1;
+            i = 1;
+
+            //这里要看看起始地址和分页除的偏移，用来方便算被访问的块号
+            // int first_offset = 0;
+            
+            //开始的页号
+            long block_count;
+
+            //结束的页号
+            long end_block_count;
+
+            //访问的首地址
+            long start_location;
 
             //只要还有可以分的，那result不会是NULL
             while((result = strtok( NULL, delims))){
                 i++;
+                
                 if(i == 5){
+                    start_location = atol(result);
+
                     //将字符串换成数字
-                    long block_count = atol(result) / PAGE_SIZE;
+                    block_count = start_location / PAGE_SIZE;
+
+                    // first_offset = atol(result) % PAGE_SIZE;
 
                     //这里将块访问记录导入到一个新的csv文件中
                     fprintf(fp_write, "%ld\n", block_count);
                     printf("%ld\n", block_count);
+                }
+                //这里将offset也考虑在内
+                if(i == 6){
+                    //看看结束的数字
+                    end_block_count = (atol(result) + start_location) / PAGE_SIZE;
+
+                    //将开始和结束块之间的块放到缓存中
+                    for(j = block_count + 1; j <= end_block_count; j++){
+                        fprintf(fp_write, "%ld\n", j);
+                        printf("%ld\n", j);
+                    }
                 }
             }         
         }

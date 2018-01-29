@@ -40,6 +40,12 @@ void predictor_manager(){
     if((fp_read = fopen("block_count_hm.csv", "r"))!=NULL){
         printf("开始读取访问的历史记录\n");
         
+        //这里创建一个数组来存储
+        page_init();
+
+        //在外部将传入的预测序列初始化
+        memset(predict_seq, 0, MAX_PREDICT_DEEP*sizeof(long));
+
         while(fgets(line, MAX_LINE_SIZE, fp_read)){
             //记录读进来的块
             all_count_of_block++;
@@ -51,12 +57,6 @@ void predictor_manager(){
             if(search_read_cache(&read_cache, access_block_count) != NULL){
                 hit_count_of_block++;
             }
-
-            //这里创建一个数组来存储
-            page_init();
-
-            //在外部将传入的预测序列初始化
-            memset(predict_seq, 0, MAX_PREDICT_DEEP*sizeof(long));
             
             page_predictor(access_block_count, predict_seq, &size);
             
@@ -88,7 +88,11 @@ void predictor_manager(){
     //计算缓存命中率
     int hit_rate = hit_count_of_block  * 100 / all_count_of_block;
 
+    //预测错误率
+    int err_rate = read_cache.page_cache_have_not_access * 100 / read_cache.page_cache_del;
+
     printf("缓冲命中率:%d%%\n", hit_rate);
+    printf("预测错误率:%d%%\n", err_rate);
 }
 
 int main(){
