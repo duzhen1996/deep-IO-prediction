@@ -3,10 +3,10 @@
 
 //我们这里使用一个链表
 //链表的一个元素
-#define MAX_READ_CACHE 100000
+#define MAX_READ_CACHE 50000
 
-//我们也是用哈希，用多个桶来分散存储读缓存
-
+#define MAX_READ_CACHE_SIZE 500
+#define MAX_READ_CACHE_NUM 100
 
 typedef struct _read_cache_meta{
     //指向前后两个索引的时针
@@ -33,9 +33,15 @@ typedef struct _read_cache{
 
 }read_cache_t;
 
-void init_readcache_meta(read_cache_t* input_cache);
+//我们将每一个缓冲区当做一个桶，然后将所有的桶整合起来
+typedef struct _all_read_cache{
+    //这里使用一个数组来保存所有的读缓存
+    read_cache_t read_cache_arr[MAX_READ_CACHE_NUM];
+}all_read_cache_t;
 
-void add_cache_meta(read_cache_t* input_cache, long cache_block_num);
+void init_readcache_meta(all_read_cache_t* input_cache);
+
+void add_cache_meta(all_read_cache_t* input_cache, long cache_block_num);
 
 void add_item_head(read_cache_t* input_cache, read_cache_meta_t* insert_meta);
 

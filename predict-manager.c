@@ -27,9 +27,9 @@ void predictor_manager(){
     int i;
 
     //这里加入一个读缓存
-    read_cache_t read_cache;
+    all_read_cache_t read_caches;
     //初始化读缓存
-    init_readcache_meta(&read_cache);
+    init_readcache_meta(&read_caches);
 
     //初始化一个函数来看看缓存命中率
     long all_count_of_block = 0;
@@ -50,7 +50,7 @@ void predictor_manager(){
 
         //初始化noah
         Noah_predictor_t noah;
-        Noah_predictor_init(&noah, 1);
+        Noah_predictor_init(&noah, 0);
 
         while(fgets(line, MAX_LINE_SIZE, fp_read)){
             //记录读进来的块
@@ -60,7 +60,9 @@ void predictor_manager(){
             access_block_count = atol(line);
 
             //看看这个块是不是命中的
-            if(search_read_cache(&read_cache, access_block_count) != NULL){
+            //哈希一下
+            int barrel_num = access_block_count % MAX_READ_CACHE_NUM;
+            if(search_read_cache(&(read_caches.read_cache_arr[barrel_num]), access_block_count) != NULL){
                 hit_count_of_block++;
             }
             
@@ -72,9 +74,11 @@ void predictor_manager(){
             noah_predictor(&noah, access_block_count, predict_seq2, &size2);
 
             //我们将新的东西放到读缓存
-            for(i = 0;  i < size2; i++){
+            for(i = 0;  i < size2 && i < size; i++){
                 //当两个预测器预测地一样的时候才会写入
-                add_cache_meta(&read_cache, predict_seq2[i]);
+                if(predict_seq[i] == predict_seq2[i]){
+                    add_cache_meta(&read_caches, predict_seq2[i]);    
+                }
             }
 
             //打印一下预测到的东西
@@ -96,12 +100,23 @@ void predictor_manager(){
     printf("读取完毕\n");
     fclose(fp_read);
     fp_read = NULL;
-
+    
     //计算缓存命中率
     int hit_rate = hit_count_of_block  * 100 / all_count_of_block;
 
     //预测错误率
-    int err_rate = read_cache.page_cache_have_not_access * 100 / read_cache.page_cache_del;
+    //这里整理一下预测错误率
+    long err_cache;
+    for(int i = 0 ; i < MAX_READ_CACHE_NUM; i++){
+        err_cache = err_cache + read_caches.read_cache_arr[i].page_cache_have_not_access;
+    }
+    long all_del_cache;
+    for(int i = 0 ; i < MAX_READ_CACHE_NUM; i++){
+        all_del_cache = all_del_cache + read_caches.read_cache_arr[i].page_cache_del;
+    }
+    int err_rate = err_cache * 100 / all_del_cache;
+
+    printf("错误的次数%ld\n", err_cache);
 
     printf("缓冲命中率:%d%%\n", hit_rate);
     printf("预测错误率:%d%%\n", err_rate);
