@@ -5,6 +5,7 @@
 #include <string.h>
 #include "pageread-predictor.h"
 #include "readcache-with-LRU.h"
+#include "Noah-predictor.h"
 
 //每一行的最大字节数，同时也是行缓冲区的大小
 #define MAX_LINE_SIZE 1024
@@ -20,7 +21,9 @@ void predictor_manager(){
     char line[MAX_LINE_SIZE];
     long access_block_count;
     long* predict_seq;
+    long* predict_seq2;
     int size;
+    int size2;
     int i;
 
     //这里加入一个读缓存
@@ -34,7 +37,9 @@ void predictor_manager(){
 
     //初始化一个预测序列
     predict_seq = (long*)malloc(MAX_PREDICT_DEEP*sizeof(long));
-
+    //初始化给noah用的第二个序列
+    predict_seq2 = (long*)malloc(MAX_PREDICT_DEEP*sizeof(long));
+    
     printf("开始运行预测\n");
 
     if((fp_read = fopen("block_count_hm.csv", "r"))!=NULL){
@@ -43,8 +48,9 @@ void predictor_manager(){
         //这里创建一个数组来存储
         page_init();
 
-        //在外部将传入的预测序列初始化
-        memset(predict_seq, 0, MAX_PREDICT_DEEP*sizeof(long));
+        //初始化noah
+        Noah_predictor_t noah;
+        Noah_predictor_init(&noah, 1);
 
         while(fgets(line, MAX_LINE_SIZE, fp_read)){
             //记录读进来的块
@@ -58,11 +64,17 @@ void predictor_manager(){
                 hit_count_of_block++;
             }
             
+            //在外部将传入的预测序列初始化
+            memset(predict_seq, 0, MAX_PREDICT_DEEP*sizeof(long));
+            memset(predict_seq2, 0 , MAX_PREDICT_DEEP*sizeof(long));
+
             page_predictor(access_block_count, predict_seq, &size);
-            
+            noah_predictor(&noah, access_block_count, predict_seq2, &size2);
+
             //我们将新的东西放到读缓存
-            for(i = 0;  i < size; i++){
-                add_cache_meta(&read_cache, predict_seq[i]);
+            for(i = 0;  i < size2; i++){
+                //当两个预测器预测地一样的时候才会写入
+                add_cache_meta(&read_cache, predict_seq2[i]);
             }
 
             //打印一下预测到的东西

@@ -2,6 +2,10 @@
     "files.associations": {
         "memory.h": "c",
         "pageread-predictor.h": "c",
-        "readcache-with-lru.h": "c"
+        "readcache-with-lru.h": "c",
+        "initializer_list": "c",
+        "iterator": "c",
+        "memory": "c",
+        "utility": "c"
     }
 }

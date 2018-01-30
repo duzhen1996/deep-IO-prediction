@@ -3,7 +3,10 @@
 
 //我们这里使用一个链表
 //链表的一个元素
-#define MAX_READ_CACHE 100
+#define MAX_READ_CACHE 100000
+
+//我们也是用哈希，用多个桶来分散存储读缓存
+
 
 typedef struct _read_cache_meta{
     //指向前后两个索引的时针

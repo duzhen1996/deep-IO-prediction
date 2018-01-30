@@ -28,7 +28,7 @@ void page_predictor(long now_access, long *predictor_arr, int *size){
         return;
     }
     
-    printf("开始进行预测，now_access = %ld\n", now_access);
+    printf("开始进行page顺序预测，now_access = %ld\n", now_access);
     //开始预测，看看之前的预测是不是对的
     //查看之前的预测结果
 
